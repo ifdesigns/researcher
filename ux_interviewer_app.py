@@ -1,5 +1,5 @@
 import streamlit as st
-import openai
+from openai import OpenAI
 from gtts import gTTS
 import os
 import tempfile
