@@ -5,18 +5,10 @@ import os
 import tempfile
 from io import BytesIO
 
-response = client.chat.completions.create(
-    model="gpt-3.5-turbo",
-    messages=messages
-)
-
-return response.choices[0].message.content
-
-# Set your OpenAI key
+# Setup OpenAI client
 client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")  # or replace with your key directly (not recommended for production)
+    api_key=os.getenv("OPENAI_API_KEY")  # or use your key directly (not recommended)
 )
-
 st.set_page_config(page_title="UX Tədqiqatçı", page_icon="💬", layout="centered")
 st.title("💬 UX Tədqiqatçı (Azərbaycan dili)")
 
