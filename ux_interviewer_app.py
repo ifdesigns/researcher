@@ -1,51 +1,70 @@
 import streamlit as st
 import openai
-from gtts import gTTS
 import os
+from gtts import gTTS
+import tempfile
 
-# Make sure API key is loaded securely
-openai.api_key = st.secrets["openai"]["api_key"]
+# Set your OpenAI API key (in production use environment variables or Streamlit secrets)
+openai.api_key = "sk-..."  # Replace with your real key or use `st.secrets["openai_api_key"]`
 
-# Intro script
-intro_script = """
-Salam! Mən Süni İntellekt dəstəkli istifadəçi təcrübəsi (UX) tədqiqatçısıyam. 
-Bu qısa müsahibə istifadəçilərin təcrübələrini daha yaxşı anlamaq üçün nəzərdə tutulub.
-
-Müsahibə zamanı sizdən məhsul və ya xidmətlə bağlı təcrübələrinizi paylaşmağınızı istəyəcəyəm.
-Məlumatlar anonim saxlanacaq və yalnız tədqiqat məqsədilə istifadə olunacaq.
-
-Hazırsınızsa, başlayaq!
-
-Sual 1: Zəhmət olmasa özünüzü təqdim edin və gündəlik texnologiya istifadəniz haqqında qısa məlumat verin.
+# AI system prompt: defines the assistant's role and tone
+SYSTEM_PROMPT = """
+Sən bir istifadəçi təcrübəsi (UX) tədqiqatçısısan. Məqsədin istifadəçilərlə müsahibə aparmaq və onların məhsulla bağlı təcrübələrini başa düşməkdir. 
+Dəqiq, səmimi və mehriban tonla danış. Sual verdikdən sonra cavab gözlə.
 """
 
-# Run intro only once
-if "intro_done" not in st.session_state:
-    st.session_state.intro_done = True
-    st.markdown(intro_script)
+# Intro message and first UX interview question
+intro_message = (
+    "Salam! Mən istifadəçi təcrübəsi üzrə süni intellekt tədqiqatçısıyam. "
+    "Bu müsahibədə sizdən məhsul və ya xidmətlə bağlı təcrübələrinizi eşitmək istəyirəm. "
+    "İcazənizlə başlayaq. İlk sualım budur:"
+)
 
-    # Text-to-speech
-    tts = gTTS(intro_script, lang='az')
-    tts.save("intro.mp3")
-    st.audio("intro.mp3", format="audio/mp3")
+first_question = "Bu məhsulu və ya xidməti sonuncu dəfə nə vaxt istifadə etdiniz və hansı məqsədlə?"
 
-# Text input area for user response
-user_input = st.text_area("Cavabınızı buraya yazın və ya dikta edin:", "")
+def speak(text):
+    """Convert text to speech using gTTS and play it in Streamlit."""
+    tts = gTTS(text, lang="az")
+    with tempfile.NamedTemporaryFile(delete=True, suffix=".mp3") as fp:
+        tts.save(fp.name)
+        st.audio(fp.name, format="audio/mp3")
 
-if user_input:
-    # Pass to GPT for follow-up or summarization
+# Streamlit UI setup
+st.set_page_config(page_title="AI UX Tədqiqatçı", page_icon="🧠")
+st.title("🧠 UX Süni İntellekt Müsahibəsi")
+
+# Session state for messages
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+    # Start conversation with system prompt and intro
+    st.session_state.messages.append({"role": "system", "content": SYSTEM_PROMPT})
+    st.session_state.messages.append({"role": "assistant", "content": intro_message})
+    st.session_state.messages.append({"role": "assistant", "content": first_question})
+    speak(intro_message)
+    speak(first_question)
+
+# Display the conversation history
+for msg in st.session_state.messages:
+    if msg["role"] != "system":
+        st.chat_message(msg["role"]).write(msg["content"])
+
+# Chat input
+prompt = st.chat_input("Cavabınızı yazın və ya sual verin...")
+
+# If user submits a message
+if prompt:
+    # Show user message
+    st.chat_message("user").write(prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    # Call OpenAI chat completion
     response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Sən UX tədqiqatçısısan. Qısa, aydın və təhrik edici suallar ver."},
-            {"role": "user", "content": user_input}
-        ]
+        model="gpt-3.5-turbo",
+        messages=st.session_state.messages
     )
-    reply = response.choices[0].message.content
-    st.write("AI cavabı:", reply)
+    assistant_reply = response.choices[0].message["content"]
 
-    # Optional: speak the next AI question
-    tts = gTTS(reply, lang='az')
-    tts.save("ai_reply.mp3")
-    st.audio("ai_reply.mp3", format="audio/mp3")
-
+    # Show and store AI reply
+    st.chat_message("assistant").write(assistant_reply)
+    st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+    speak(assistant_reply)
