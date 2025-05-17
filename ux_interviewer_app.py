@@ -7,7 +7,8 @@ from io import BytesIO
 
 # Setup OpenAI client
 client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")  # or use your key directly (not recommended)
+    openai.api_key = st.secrets["openai"]["api_key"]
+
 )
 st.set_page_config(page_title="UX Tədqiqatçı", page_icon="💬", layout="centered")
 st.title("💬 UX Tədqiqatçı (Azərbaycan dili)")
