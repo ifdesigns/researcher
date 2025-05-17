@@ -3,7 +3,8 @@ import openai
 import os
 
 # API key (use secret manager in production)
-openai.api_key = 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
+openai.api_key = st.secrets["openai"]["api_key"]
+
 
 SYSTEM_PROMPT = """
 Sən bir istifadəçi təcrübəsi (UX) tədqiqatçısısan. Məqsədin istifadəçidən məhsul və ya xidmətlə bağlı təcrübəsini anlamaqdır...
