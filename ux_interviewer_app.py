@@ -6,7 +6,9 @@ import tempfile
 from io import BytesIO
 
 # Set your OpenAI key
-openai.api_key = st.secrets["openai"]["api_key"]
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")  # or replace with your key directly (not recommended for production)
+)
 
 st.set_page_config(page_title="UX Tədqiqatçı", page_icon="💬", layout="centered")
 st.title("💬 UX Tədqiqatçı (Azərbaycan dili)")
